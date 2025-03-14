@@ -10,11 +10,13 @@ import s05.virtualpet.service.PetService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class PetServiceImpl implements PetService {
 
     private final PetRepository petRepository;
+    private final Random random = new Random();
 
     public PetServiceImpl(PetRepository petRepository) {
         this.petRepository = petRepository;
@@ -29,7 +31,6 @@ public class PetServiceImpl implements PetService {
                 .chips(100)
                 .owner(owner)
                 .build();
-
         return petRepository.save(pet);
     }
 
@@ -53,7 +54,13 @@ public class PetServiceImpl implements PetService {
         return petRepository.findById(petId).map(pet -> {
             switch (action) {
                 case "placeBet" -> pet.placeBet();
-                case "winBig" -> pet.winBig();
+                case "winBig" -> {
+                    if (random.nextDouble() < 0.3) { // 30% chance to win big
+                        pet.winBig();
+                    } else {
+                        pet.placeBet(); // Losing scenario
+                    }
+                }
                 case "goAllIn" -> pet.goAllIn();
                 default -> throw new IllegalArgumentException("Unknown action: " + action);
             }
@@ -61,4 +68,3 @@ public class PetServiceImpl implements PetService {
         }).orElseThrow(() -> new RuntimeException("Pet not found"));
     }
 }
-

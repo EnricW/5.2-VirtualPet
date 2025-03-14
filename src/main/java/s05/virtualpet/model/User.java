@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import s05.virtualpet.enums.UserRole;
 
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -22,6 +24,9 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     private UserRole role;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Pet> pets;
 
     public User(String username, String password, UserRole role) {
         this.username = username;
