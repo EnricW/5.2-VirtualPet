@@ -24,16 +24,15 @@ public class JwtUtil {
 
     private final ConcurrentHashMap<String, String> refreshTokens = new ConcurrentHashMap<>();
     private final UserRepository userRepository;
-    private final UserDetailsService userDetailsService;
 
-    public JwtUtil(UserRepository userRepository, UserDetailsService userDetailsService) {
+    public JwtUtil(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.userDetailsService = userDetailsService;
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         return Jwts.builder()
                 .setSubject(username)
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(secretKey)
@@ -60,12 +59,16 @@ public class JwtUtil {
                 .getSubject();
     }
 
+    public Claims extractClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
     public boolean validateToken(String token) {
         try {
-            String username = extractUsername(token);
-            if (!userRepository.findByUsername(username).isPresent()) {
-                return false;
-            }
             Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -90,19 +93,11 @@ public class JwtUtil {
             throw new RuntimeException("Invalid refresh token");
         }
         String username = extractUsername(refreshToken);
-        return generateToken(username);
-    }
 
-    public void configureSecurity(HttpSecurity http, JwtFilter jwtFilter) throws Exception {
-        http
-                .csrf().disable()
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/pets/**").hasRole("USER")
-                        .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+        String role = userRepository.findByUsername(username)
+                .map(user -> user.getRole().name())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return generateToken(username, role);
     }
 }
