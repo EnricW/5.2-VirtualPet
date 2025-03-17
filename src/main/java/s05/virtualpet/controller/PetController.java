@@ -6,6 +6,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import s05.virtualpet.dto.PetCreateDTO;
 import s05.virtualpet.dto.PetDTO;
+import s05.virtualpet.exception.custom.PetNotFoundException;
+import s05.virtualpet.exception.custom.UnauthorizedPetAccessException;
 import s05.virtualpet.model.Pet;
 import s05.virtualpet.model.User;
 import s05.virtualpet.service.PetService;
@@ -36,10 +38,10 @@ public class PetController {
     @GetMapping("/{id}")
     public PetDTO getPetById(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
         User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.getPetById(id).orElseThrow(() -> new RuntimeException("Pet not found"));
+        Pet pet = petService.getPetById(id).orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
         if (!pet.getOwner().getId().equals(owner.getId())) {
-            throw new RuntimeException("You do not own this pet!");
+            throw new UnauthorizedPetAccessException("You do not own this pet!");
         }
 
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
@@ -58,10 +60,10 @@ public class PetController {
                                 @PathVariable Long id,
                                 @RequestParam String action) {
         User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.getPetById(id).orElseThrow(() -> new RuntimeException("Pet not found"));
+        Pet pet = petService.getPetById(id).orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
         if (!pet.getOwner().getId().equals(owner.getId())) {
-            throw new RuntimeException("You do not own this pet!");
+            throw new UnauthorizedPetAccessException("You do not own this pet!");
         }
 
         pet = petService.handleAction(id, action);
@@ -71,10 +73,10 @@ public class PetController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePet(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
         User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.getPetById(id).orElseThrow(() -> new RuntimeException("Pet not found"));
+        Pet pet = petService.getPetById(id).orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
         if (!pet.getOwner().getId().equals(owner.getId())) {
-            return ResponseEntity.status(403).body("You do not own this pet!");
+            throw new UnauthorizedPetAccessException("You do not own this pet!");
         }
 
         petService.deletePet(id);

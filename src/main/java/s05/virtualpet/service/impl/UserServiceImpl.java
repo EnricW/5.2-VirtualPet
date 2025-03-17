@@ -3,6 +3,8 @@ package s05.virtualpet.service.impl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import s05.virtualpet.enums.UserRole;
+import s05.virtualpet.exception.custom.UserNotFoundException;
+import s05.virtualpet.exception.custom.UsernameAlreadyExistsException;
 import s05.virtualpet.model.User;
 import s05.virtualpet.repository.UserRepository;
 import s05.virtualpet.service.UserService;
@@ -21,7 +23,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User registerUser(String username, String password) {
         if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
+            throw new UsernameAlreadyExistsException("Username already exists");
         }
 
         String hashedPassword = passwordEncoder.encode(password);
@@ -32,6 +34,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }

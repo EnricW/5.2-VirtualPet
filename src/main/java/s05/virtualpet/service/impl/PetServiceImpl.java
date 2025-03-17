@@ -3,6 +3,10 @@ package s05.virtualpet.service.impl;
 import org.springframework.stereotype.Service;
 import s05.virtualpet.enums.Luck;
 import s05.virtualpet.enums.PetType;
+import s05.virtualpet.exception.custom.InvalidPetActionException;
+import s05.virtualpet.exception.custom.PetAlreadyBankruptException;
+import s05.virtualpet.exception.custom.PetNotFoundException;
+import s05.virtualpet.exception.custom.PetOutOfChipsException;
 import s05.virtualpet.model.Pet;
 import s05.virtualpet.model.User;
 import s05.virtualpet.repository.PetRepository;
@@ -41,17 +45,29 @@ public class PetServiceImpl implements PetService {
 
     @Override
     public Optional<Pet> getPetById(Long id) {
-        return petRepository.findById(id);
+        return petRepository.findById(id).or(() -> {
+            throw new PetNotFoundException("Pet with ID " + id + " not found");
+        });
     }
 
     @Override
     public void deletePet(Long id) {
+        if (!petRepository.existsById(id)) {
+            throw new PetNotFoundException("Pet with ID " + id + " does not exist");
+        }
         petRepository.deleteById(id);
     }
 
     @Override
     public Pet handleAction(Long petId, String action) {
         return petRepository.findById(petId).map(pet -> {
+            if (pet.getChips() == 0) {
+                throw new PetOutOfChipsException("Pet " + pet.getName() + " has no chips left");
+            }
+            if (pet.getLuck() == Luck.BANKRUPT) {
+                throw new PetAlreadyBankruptException("Pet " + pet.getName() + " is already bankrupt");
+            }
+
             switch (action) {
                 case "placeBet" -> pet.placeBet();
                 case "winBig" -> {
@@ -62,9 +78,9 @@ public class PetServiceImpl implements PetService {
                     }
                 }
                 case "goAllIn" -> pet.goAllIn();
-                default -> throw new IllegalArgumentException("Unknown action: " + action);
+                default -> throw new InvalidPetActionException("Invalid action: " + action);
             }
             return petRepository.save(pet);
-        }).orElseThrow(() -> new RuntimeException("Pet not found"));
+        }).orElseThrow(() -> new PetNotFoundException("Pet with ID " + petId + " not found"));
     }
 }
