@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.stereotype.Component;
+import s05.virtualpet.exception.custom.InvalidJwtTokenException;
 import s05.virtualpet.repository.UserRepository;
 
 import javax.crypto.SecretKey;
@@ -51,12 +52,16 @@ public class JwtUtil {
     }
 
     public String extractUsername(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (JwtException e) {
+            throw new InvalidJwtTokenException("Invalid or expired JWT token.");
+        }
     }
 
     public Claims extractClaims(String token) {
@@ -75,7 +80,7 @@ public class JwtUtil {
                     .parseClaimsJws(token);
             return true;
         } catch (JwtException e) {
-            return false;
+            throw new InvalidJwtTokenException("Invalid or expired JWT token.");
         }
     }
 
