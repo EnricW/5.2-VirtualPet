@@ -6,12 +6,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import s05.virtualpet.dto.PetCreateDTO;
 import s05.virtualpet.dto.PetDTO;
-import s05.virtualpet.exception.custom.PetNotFoundException;
-import s05.virtualpet.exception.custom.UnauthorizedPetAccessException;
 import s05.virtualpet.model.Pet;
-import s05.virtualpet.model.User;
 import s05.virtualpet.service.PetService;
-import s05.virtualpet.service.UserService;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,36 +17,26 @@ import java.util.stream.Collectors;
 public class PetController {
 
     private final PetService petService;
-    private final UserService userService;
 
-    public PetController(PetService petService, UserService userService) {
+    public PetController(PetService petService) {
         this.petService = petService;
-        this.userService = userService;
     }
 
     @PostMapping("/create")
     public PetDTO createPet(@AuthenticationPrincipal UserDetails userDetails, @RequestBody PetCreateDTO request) {
-        User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.createPet(request.name(), request.type().toString(), owner);
+        Pet pet = petService.createPet(request.name(), String.valueOf(request.type()), userDetails.getUsername());
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
     }
 
     @GetMapping("/{id}")
     public PetDTO getPetById(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
-        User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.getPetById(id).orElseThrow(() -> new PetNotFoundException("Pet not found"));
-
-        if (!pet.getOwner().getId().equals(owner.getId())) {
-            throw new UnauthorizedPetAccessException("You do not own this pet!");
-        }
-
+        Pet pet = petService.getPetForUser(id, userDetails.getUsername());
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
     }
 
     @GetMapping
     public List<PetDTO> getUserPets(@AuthenticationPrincipal UserDetails userDetails) {
-        User owner = userService.findByUsername(userDetails.getUsername());
-        return petService.getUserPets(owner).stream()
+        return petService.getUserPets(userDetails.getUsername()).stream()
                 .map(pet -> new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips()))
                 .collect(Collectors.toList());
     }
@@ -59,27 +45,13 @@ public class PetController {
     public PetDTO performAction(@AuthenticationPrincipal UserDetails userDetails,
                                 @PathVariable Long id,
                                 @RequestParam String action) {
-        User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.getPetById(id).orElseThrow(() -> new PetNotFoundException("Pet not found"));
-
-        if (!pet.getOwner().getId().equals(owner.getId())) {
-            throw new UnauthorizedPetAccessException("You do not own this pet!");
-        }
-
-        pet = petService.handleAction(id, action);
+        Pet pet = petService.handleActionForUser(id, action, userDetails.getUsername());
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePet(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id) {
-        User owner = userService.findByUsername(userDetails.getUsername());
-        Pet pet = petService.getPetById(id).orElseThrow(() -> new PetNotFoundException("Pet not found"));
-
-        if (!pet.getOwner().getId().equals(owner.getId())) {
-            throw new UnauthorizedPetAccessException("You do not own this pet!");
-        }
-
-        petService.deletePet(id);
+        petService.deletePetForUser(id, userDetails.getUsername());
         return ResponseEntity.ok("Pet deleted successfully!");
     }
 }
