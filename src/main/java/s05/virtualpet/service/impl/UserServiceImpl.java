@@ -2,9 +2,9 @@ package s05.virtualpet.service.impl;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import s05.virtualpet.dto.UserDTO;
 import s05.virtualpet.enums.UserRole;
 import s05.virtualpet.exception.custom.InvalidCredentialsException;
-import s05.virtualpet.exception.custom.UserNotFoundException;
 import s05.virtualpet.exception.custom.UsernameAlreadyExistsException;
 import s05.virtualpet.model.User;
 import s05.virtualpet.repository.UserRepository;
@@ -27,25 +27,28 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User registerUser(String username, String password) {
+    public UserDTO registerUser(String username, String password) {
         if (userRepository.existsByUsername(username)) {
             throw new UsernameAlreadyExistsException("Username already exists");
         }
 
         String hashedPassword = passwordEncoder.encode(password);
         User user = new User(username, hashedPassword, UserRole.ROLE_USER);
-        return userRepository.save(user);
+        user = userRepository.save(user);
+
+        return new UserDTO(user.getId(), user.getUsername(), user.getRole());
     }
 
     @Override
-    public Optional<User> findByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public Optional<UserDTO> findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(user -> new UserDTO(user.getId(), user.getUsername(), user.getRole()));
     }
 
     @Override
     public String authenticateUser(String username, String password) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new InvalidCredentialsException("Invalid username or password");
