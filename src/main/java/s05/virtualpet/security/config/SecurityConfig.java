@@ -1,4 +1,4 @@
-package s05.virtualpet.security;
+package s05.virtualpet.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,7 +15,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import s05.virtualpet.repository.UserRepository;
+import s05.virtualpet.security.jwt.JwtFilter;
+import s05.virtualpet.security.jwt.JwtUtil;
 
 import java.util.List;
 
@@ -41,11 +42,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService(UserRepository userRepository) {
-        return new CustomUserDetailsService(userRepository);
     }
 
     @Bean

@@ -1,5 +1,6 @@
-package s05.virtualpet.security;
+package s05.virtualpet.security.auth;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -24,7 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getUsername())
                 .password(user.getPassword())
-                .roles(user.getRole().name().replace("ROLE_", ""))
+                .authorities(new SimpleGrantedAuthority(user.getRole().name()))
                 .build();
     }
 }

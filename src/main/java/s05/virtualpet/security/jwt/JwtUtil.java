@@ -1,4 +1,4 @@
-package s05.virtualpet.security;
+package s05.virtualpet.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -60,11 +60,8 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token);
-            return true;
+            Claims claims = extractClaims(token);
+            return !claims.getExpiration().before(new Date());
         } catch (JwtException e) {
             throw new InvalidJwtTokenException("Invalid or expired JWT token.");
         }

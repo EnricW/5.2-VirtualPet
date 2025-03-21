@@ -8,7 +8,7 @@ import s05.virtualpet.exception.custom.InvalidCredentialsException;
 import s05.virtualpet.exception.custom.UsernameAlreadyExistsException;
 import s05.virtualpet.model.User;
 import s05.virtualpet.repository.UserRepository;
-import s05.virtualpet.security.JwtUtil;
+import s05.virtualpet.security.jwt.JwtUtil;
 import s05.virtualpet.service.UserService;
 
 import java.util.Optional;
