@@ -2,6 +2,7 @@ package s05.virtualpet.service.impl;
 
 import org.springframework.stereotype.Service;
 import s05.virtualpet.enums.Luck;
+import s05.virtualpet.enums.PetAction;
 import s05.virtualpet.enums.PetType;
 import s05.virtualpet.exception.custom.*;
 import s05.virtualpet.model.Pet;
@@ -60,7 +61,7 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
-    public Pet handleActionForUser(Long petId, String action, String username) {
+    public Pet handleActionForUser(Long petId, PetAction action, String username) {
         Pet pet = getPetForUser(petId, username); // Ownership validation is already handled here
 
         if (pet.getChips() == 0) {
@@ -71,15 +72,15 @@ public class PetServiceImpl implements PetService {
         }
 
         switch (action) {
-            case "placeBet" -> pet.placeBet();
-            case "winBig" -> {
+            case PLACE_BET  -> pet.placeBet();
+            case WIN_BIG -> {
                 if (random.nextDouble() < 0.3) { // 30% chance to win big
                     pet.winBig();
                 } else {
                     pet.placeBet(); // Losing scenario
                 }
             }
-            case "goAllIn" -> pet.goAllIn();
+            case GO_ALL_IN -> pet.goAllIn();
             default -> throw new InvalidPetActionException("Invalid action: " + action);
         }
         return petRepository.save(pet);

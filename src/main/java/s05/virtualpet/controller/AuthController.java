@@ -2,8 +2,10 @@ package s05.virtualpet.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import s05.virtualpet.dto.UserLoginDTO;
 import s05.virtualpet.dto.UserRegisterDTO;
 import s05.virtualpet.service.UserService;
+import jakarta.validation.Valid;
 
 import java.util.Collections;
 
@@ -19,13 +21,13 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody UserRegisterDTO request) {
+    public ResponseEntity<?> register(@Valid @RequestBody UserRegisterDTO request) {
         userService.registerUser(request.username(), request.password());
         return ResponseEntity.ok("User registered successfully!");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserRegisterDTO loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody UserLoginDTO loginRequest) {
         String token = userService.authenticateUser(loginRequest.username(), loginRequest.password());
         return ResponseEntity.ok(Collections.singletonMap("token", token));
     }

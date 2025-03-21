@@ -1,11 +1,13 @@
 package s05.virtualpet.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import s05.virtualpet.dto.PetCreateDTO;
 import s05.virtualpet.dto.PetDTO;
+import s05.virtualpet.enums.PetAction;
 import s05.virtualpet.model.Pet;
 import s05.virtualpet.service.PetService;
 
@@ -22,8 +24,8 @@ public class PetController {
         this.petService = petService;
     }
 
-    @PostMapping("/create")
-    public PetDTO createPet(@AuthenticationPrincipal UserDetails userDetails, @RequestBody PetCreateDTO request) {
+    @PostMapping()
+    public PetDTO createPet(@AuthenticationPrincipal UserDetails userDetails, @Valid @RequestBody PetCreateDTO request) {
         Pet pet = petService.createPet(request.name(), String.valueOf(request.type()), userDetails.getUsername());
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
     }
@@ -44,7 +46,7 @@ public class PetController {
     @PostMapping("/{id}/action")
     public PetDTO performAction(@AuthenticationPrincipal UserDetails userDetails,
                                 @PathVariable Long id,
-                                @RequestParam String action) {
+                                @RequestParam PetAction action) {
         Pet pet = petService.handleActionForUser(id, action, userDetails.getUsername());
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
     }
