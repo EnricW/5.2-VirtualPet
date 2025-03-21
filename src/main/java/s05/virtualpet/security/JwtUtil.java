@@ -2,31 +2,28 @@ package s05.virtualpet.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 import s05.virtualpet.exception.custom.InvalidJwtTokenException;
 import s05.virtualpet.repository.UserRepository;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.List;
 
 @Component
 public class JwtUtil {
 
-    private final SecretKey secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final SecretKey secretKey;
     private final long accessTokenExpiration = 86400000; // 1 day
-    private final long refreshTokenExpiration = 604800000; // 7 days
 
-    private final ConcurrentHashMap<String, String> refreshTokens = new ConcurrentHashMap<>();
     private final UserRepository userRepository;
 
-    public JwtUtil(UserRepository userRepository) {
+    public JwtUtil(@Value("${jwt.secret}") String secret, UserRepository userRepository) {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.userRepository = userRepository;
     }
 
@@ -38,17 +35,6 @@ public class JwtUtil {
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
                 .signWith(secretKey)
                 .compact();
-    }
-
-    public String generateRefreshToken(String username) {
-        String refreshToken = Jwts.builder()
-                .setSubject(username)
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
-                .signWith(secretKey)
-                .compact();
-        refreshTokens.put(username, refreshToken);
-        return refreshToken;
     }
 
     public String extractUsername(String token) {
@@ -84,25 +70,9 @@ public class JwtUtil {
         }
     }
 
-    public boolean validateRefreshToken(String token) {
-        try {
-            String username = extractUsername(token);
-            return refreshTokens.containsKey(username) && refreshTokens.get(username).equals(token);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public String refreshAccessToken(String refreshToken) {
-        if (!validateRefreshToken(refreshToken)) {
-            throw new RuntimeException("Invalid refresh token");
-        }
-        String username = extractUsername(refreshToken);
-
-        String role = userRepository.findByUsername(username)
-                .map(user -> user.getRole().name())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        return generateToken(username, role);
+    public List<GrantedAuthority> getAuthoritiesFromToken(String token) {
+        Claims claims = extractClaims(token);
+        String role = claims.get("role", String.class);
+        return List.of(new SimpleGrantedAuthority(role));
     }
 }
