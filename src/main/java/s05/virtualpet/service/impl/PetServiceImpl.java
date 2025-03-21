@@ -10,10 +10,10 @@ import s05.virtualpet.model.Pet;
 import s05.virtualpet.model.User;
 import s05.virtualpet.repository.PetRepository;
 import s05.virtualpet.repository.UserRepository;
+import s05.virtualpet.service.PetActionService;
 import s05.virtualpet.service.PetService;
 
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,11 +21,14 @@ public class PetServiceImpl implements PetService {
 
     private final PetRepository petRepository;
     private final UserRepository userRepository;
-    private final Random random = new Random();
+    private final PetActionService petActionService;
 
-    public PetServiceImpl(PetRepository petRepository, UserRepository userRepository) {
+    public PetServiceImpl(PetRepository petRepository,
+                          UserRepository userRepository,
+                          PetActionService petActionService) {
         this.petRepository = petRepository;
         this.userRepository = userRepository;
+        this.petActionService = petActionService;
     }
 
     @Override
@@ -84,17 +87,7 @@ public class PetServiceImpl implements PetService {
             throw new PetAlreadyBankruptException("Pet " + pet.getName() + " is already bankrupt");
         }
 
-        switch (action) {
-            case PLACE_BET -> pet.placeBet();
-            case WIN_BIG -> {
-                if (random.nextDouble() < 0.3) {
-                    pet.winBig();
-                } else {
-                    pet.placeBet();
-                }
-            }
-            case GO_ALL_IN -> pet.goAllIn();
-        }
+        petActionService.applyAction(pet, action);
 
         pet = petRepository.save(pet);
         return toDTO(pet);
