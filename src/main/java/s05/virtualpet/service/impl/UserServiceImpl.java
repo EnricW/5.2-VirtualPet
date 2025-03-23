@@ -11,8 +11,6 @@ import s05.virtualpet.repository.UserRepository;
 import s05.virtualpet.security.jwt.JwtUtil;
 import s05.virtualpet.service.UserService;
 
-import java.util.Optional;
-
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -37,12 +35,6 @@ public class UserServiceImpl implements UserService {
         user = userRepository.save(user);
 
         return new UserDTO(user.getId(), user.getUsername(), user.getRole());
-    }
-
-    @Override
-    public Optional<UserDTO> findByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .map(user -> new UserDTO(user.getId(), user.getUsername(), user.getRole()));
     }
 
     @Override

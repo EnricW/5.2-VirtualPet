@@ -5,6 +5,7 @@ import s05.virtualpet.dto.PetDTO;
 import s05.virtualpet.enums.Luck;
 import s05.virtualpet.enums.PetAction;
 import s05.virtualpet.enums.PetType;
+import s05.virtualpet.enums.UserRole;
 import s05.virtualpet.exception.custom.*;
 import s05.virtualpet.model.Pet;
 import s05.virtualpet.model.User;
@@ -50,12 +51,14 @@ public class PetServiceImpl implements PetService {
 
     @Override
     public List<PetDTO> getUserPets(String username) {
-        User owner = userRepository.findByUsername(username)
+        User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new PetNotFoundException("User not found"));
 
-        return petRepository.findByOwner(owner).stream()
-                .map(this::toDTO)
-                .collect(Collectors.toList());
+        if (user.getRole() == UserRole.ROLE_ADMIN) {
+            return petRepository.findAll().stream().map(this::toDTO).collect(Collectors.toList());
+        }
+
+        return petRepository.findByOwner(user).stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     @Override
@@ -63,9 +66,10 @@ public class PetServiceImpl implements PetService {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
-        if (!pet.getOwner().getUsername().equals(username)) {
-            throw new UnauthorizedPetAccessException("You do not own this pet!");
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new PetNotFoundException("User not found"));
+
+        ensureUserCanAccessPet(user, pet);
 
         return toDTO(pet);
     }
@@ -75,9 +79,10 @@ public class PetServiceImpl implements PetService {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
-        if (!pet.getOwner().getUsername().equals(username)) {
-            throw new UnauthorizedPetAccessException("You do not own this pet!");
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new PetNotFoundException("User not found"));
+
+        ensureUserCanAccessPet(user, pet);
 
         if (pet.getChips() == 0) {
             throw new PetOutOfChipsException("Pet " + pet.getName() + " has no chips left");
@@ -98,14 +103,21 @@ public class PetServiceImpl implements PetService {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
-        if (!pet.getOwner().getUsername().equals(username)) {
-            throw new UnauthorizedPetAccessException("You do not own this pet!");
-        }
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new PetNotFoundException("User not found"));
+
+        ensureUserCanAccessPet(user, pet);
 
         petRepository.delete(pet);
     }
 
     private PetDTO toDTO(Pet pet) {
         return new PetDTO(pet.getId(), pet.getName(), pet.getType(), pet.getLuck(), pet.getChips());
+    }
+
+    private void ensureUserCanAccessPet(User user, Pet pet) {
+        if (!pet.getOwner().getUsername().equals(user.getUsername()) && user.getRole() != UserRole.ROLE_ADMIN) {
+            throw new UnauthorizedPetAccessException("You do not own this pet!");
+        }
     }
 }

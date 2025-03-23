@@ -7,6 +7,5 @@ import java.util.Optional;
 
 public interface UserService {
     UserDTO registerUser(String username, String password);
-    Optional<UserDTO> findByUsername(String username);
     String authenticateUser(String username, String password);
 }
