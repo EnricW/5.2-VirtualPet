@@ -23,7 +23,7 @@ public class Pet {
     private PetType type; // HEARTS, DIAMONDS, CLUBS, SPADES
 
     @Enumerated(EnumType.STRING)
-    private Luck luck = Luck.LUCKY; // Default: LUCKY
+    private Luck luck = Luck.HAPPY; // Default: HAPPY
 
     private int chips = 100; // Default: 100 chips
 

@@ -1,8 +1,8 @@
 package s05.virtualpet.enums;
 
 public enum Luck {
-    VERY_LUCKY,  // Feeling unstoppable!
-    LUCKY,       // Things are going well.
-    UNLUCKY,     // Down on luck, but still playing.
-    BANKRUPT     // Lost everything, time to reset.
+    HAPPY,       // Doing great, feeling well!
+    OKAY,        // Fine, but could use attention
+    UNHAPPY,     // Feeling down, needs care
+    BANKRUPT     // Out of energy, urgent help needed
 }

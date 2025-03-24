@@ -40,7 +40,7 @@ public class PetServiceImpl implements PetService {
         Pet pet = Pet.builder()
                 .name(name)
                 .type(PetType.valueOf(type.toUpperCase()))
-                .luck(Luck.LUCKY)
+                .luck(Luck.HAPPY)
                 .chips(100)
                 .owner(owner)
                 .build();
