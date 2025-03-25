@@ -2,6 +2,7 @@ package s05.virtualpet.security.jwt;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -14,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
+@Slf4j
 @Component
 public class JwtUtil {
 
@@ -28,6 +30,8 @@ public class JwtUtil {
     }
 
     public String generateToken(String username, String role) {
+        log.info("Generating token for user '{}', role '{}'", username, role);
+
         return Jwts.builder()
                 .setSubject(username)
                 .claim("role", role)
@@ -61,7 +65,9 @@ public class JwtUtil {
     public boolean validateToken(String token) {
         try {
             Claims claims = extractClaims(token);
-            return !claims.getExpiration().before(new Date());
+            boolean valid = !claims.getExpiration().before(new Date());
+            log.debug("Token validation result: {}", valid);
+            return valid;
         } catch (JwtException e) {
             throw new InvalidJwtTokenException("Invalid or expired JWT token.");
         }

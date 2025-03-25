@@ -1,5 +1,6 @@
 package s05.virtualpet.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import s05.virtualpet.dto.UserDTO;
@@ -11,6 +12,7 @@ import s05.virtualpet.repository.UserRepository;
 import s05.virtualpet.security.jwt.JwtUtil;
 import s05.virtualpet.service.UserService;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -26,6 +28,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO registerUser(String username, String password) {
+        log.info("Registering user: {}", username);
+
         if (userRepository.existsByUsername(username)) {
             throw new UsernameAlreadyExistsException("Username already exists");
         }
@@ -46,6 +50,7 @@ public class UserServiceImpl implements UserService {
             throw new InvalidCredentialsException("Invalid username or password");
         }
 
+        log.info("User '{}' authenticated successfully", username);
         return jwtUtil.generateToken(user.getUsername(), user.getRole().name());
     }
 }

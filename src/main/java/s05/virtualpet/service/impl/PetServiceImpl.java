@@ -1,5 +1,6 @@
 package s05.virtualpet.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import s05.virtualpet.dto.PetDTO;
 import s05.virtualpet.enums.Luck;
@@ -17,6 +18,7 @@ import s05.virtualpet.service.PetService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PetServiceImpl implements PetService {
 
@@ -34,6 +36,8 @@ public class PetServiceImpl implements PetService {
 
     @Override
     public PetDTO createPet(String name, String type, String username) {
+        log.info("Creating pet: name={}, type={}, for user={}", name, type, username);
+
         User owner = userRepository.findByUsername(username)
                 .orElseThrow(() -> new PetNotFoundException("User not found"));
 
@@ -51,6 +55,8 @@ public class PetServiceImpl implements PetService {
 
     @Override
     public List<PetDTO> getUserPets(String username) {
+        log.info("Retrieving pets for user: {}", username);
+
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new PetNotFoundException("User not found"));
 
@@ -63,6 +69,8 @@ public class PetServiceImpl implements PetService {
 
     @Override
     public PetDTO getPetForUser(Long petId, String username) {
+        log.info("Fetching pet ID {} for user {}", petId, username);
+
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found"));
 
@@ -92,6 +100,7 @@ public class PetServiceImpl implements PetService {
             throw new PetAlreadyBankruptException("Pet " + pet.getName() + " is already bankrupt");
         }
 
+        log.info("User '{}' performed action '{}' on pet '{}'", username, action, pet.getName());
         petActionService.applyAction(pet, action);
 
         pet = petRepository.save(pet);
@@ -108,6 +117,7 @@ public class PetServiceImpl implements PetService {
 
         ensureUserCanAccessPet(user, pet);
 
+        log.info("User '{}' deleted pet '{}'", username, pet.getName());
         petRepository.delete(pet);
     }
 

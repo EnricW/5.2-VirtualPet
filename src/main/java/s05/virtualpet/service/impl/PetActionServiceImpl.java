@@ -1,5 +1,6 @@
 package s05.virtualpet.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import s05.virtualpet.enums.Luck;
 import s05.virtualpet.enums.PetAction;
@@ -9,6 +10,7 @@ import s05.virtualpet.service.PetActionService;
 
 import java.util.Random;
 
+@Slf4j
 @Service
 public class PetActionServiceImpl implements PetActionService {
 
@@ -22,9 +24,11 @@ public class PetActionServiceImpl implements PetActionService {
     @Override
     public void applyAction(Pet pet, PetAction action) {
         if (pet.getLuck() == Luck.BANKRUPT) {
-            // No actions allowed when pet is bankrupt
+            log.warn("Pet '{}' is BANKRUPT, skipping action '{}'", pet.getName(), action);
             return;
         }
+
+        log.info("Applying action '{}' to pet '{}'", action, pet.getName());
 
         switch (action) {
             case FEED -> feed(pet);
@@ -37,23 +41,27 @@ public class PetActionServiceImpl implements PetActionService {
     }
 
     private void feed(Pet pet) {
-        pet.setChips(Math.min(pet.getChips() + FEED_BOOST, MAX_CHIPS));
+        int before = pet.getChips();
+        pet.setChips(Math.min(before + FEED_BOOST, MAX_CHIPS));
+        log.debug("Fed pet '{}': chips {} -> {}", pet.getName(), before, pet.getChips());
     }
 
     private void play(Pet pet) {
-        pet.setChips(Math.max(pet.getChips() - PLAY_COST, 0));
+        int before = pet.getChips();
+        pet.setChips(Math.max(before - PLAY_COST, 0));
+        log.debug("Played with pet '{}': chips {} -> {}", pet.getName(), before, pet.getChips());
     }
 
     private void interact(Pet pet) {
-        // +5 chips
-        pet.setChips(Math.min(pet.getChips() + INTERACT_BOOST, MAX_CHIPS));
+        int before = pet.getChips();
+        pet.setChips(Math.min(before + INTERACT_BOOST, MAX_CHIPS));
+        log.debug("Interacted with pet '{}': chips {} -> {}", pet.getName(), before, pet.getChips());
 
-        // 30% chance to improve luck by one tier
         if (random.nextDouble() < 0.3) {
             switch (pet.getLuck()) {
                 case UNHAPPY -> pet.setLuck(Luck.OKAY);
                 case OKAY -> pet.setLuck(Luck.HAPPY);
-                default -> {} // already HAPPY or BANKRUPT
+                default -> {}
             }
         }
     }
