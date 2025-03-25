@@ -1,6 +1,8 @@
 package s05.virtualpet.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import s05.virtualpet.dto.PetDTO;
 import s05.virtualpet.enums.Luck;
@@ -35,6 +37,7 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
+    @CacheEvict(value = "pets", key = "#username")
     public PetDTO createPet(String name, String type, String username) {
         log.info("Creating pet: name={}, type={}, for user={}", name, type, username);
 
@@ -54,6 +57,7 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
+    @Cacheable(value = "pets", key = "#username")
     public List<PetDTO> getUserPets(String username) {
         log.info("Retrieving pets for user: {}", username);
 
@@ -83,6 +87,7 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
+    @CacheEvict(value = "pets", key = "#username")
     public PetDTO handleActionForUser(Long petId, PetAction action, String username) {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found"));
@@ -108,6 +113,7 @@ public class PetServiceImpl implements PetService {
     }
 
     @Override
+    @CacheEvict(value = "pets", key = "#username")
     public void deletePetForUser(Long petId, String username) {
         Pet pet = petRepository.findById(petId)
                 .orElseThrow(() -> new PetNotFoundException("Pet not found"));
